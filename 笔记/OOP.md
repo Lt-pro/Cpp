@@ -237,6 +237,43 @@
 ## 三、C++OOP特征
 
 - 浅拷贝与深拷贝
+  - C++默认拷贝构造函数将每个成员变量复制给新的对象，该方式称为浅拷贝
+  - 当涉及动态内存分配时不能简单复制指针的地址，而是为新对象申请一块新空间并将数据存放到新空间上，该方式称为深拷贝
+  - 深拷贝示例
+
+    ```C++
+    #include<cstring>
+    class baseDMA {
+    private:
+        char *label;
+        int rating;
+    public:
+        baseDMA():label(nullptr),rating(0){}
+        baseDMA(char* l, int r);
+        baseDMA(const baseMDA& obj);
+        ~baseDMA(){delete [] label;}
+        baseDMA& operator=(const baseDMA& obj);
+    };
+    baseDMA::baseDMA(char* l, int r) {
+        label = new char[std::strlen(l)+1];
+        std::strcopy(label, l);
+        rating = r;
+    }
+    baseDMA::baseDMA(const baseDMA& obj) {
+        label = new char[std::strlen(obj.label)+1];
+        std::strcopy(label, obj.label);
+        rating = obj.rating;
+    }
+    baseDMA& baseDMA::operator=(const baseDMA& obj) {
+        if (this == &obj)
+            return *this;
+        delete [] label;
+        label = new char[std::stdlen(obj.label)+1];
+        std::strcopy(label, obj.label);
+        rating = obj.rating;
+        return *this;
+    }
+    ```
 - 友元函数
 - 运算符重载
 - const对象与const成员函数
@@ -245,7 +282,7 @@
 
 - 继承
   - 继承允许从一个类派生出另一个类，原始类称为父类，派生类称为子类
-  - 子类继承父类的所有变量和方法，可以访问非私有变量和方法，子类不继承父类构造函数、友元函数和重载的运算符
+  - 子类继承父类的所有变量和方法，可以访问非私有变量和方法，子类不继承父类构造函数、析构函数和赋值运算符
   - 定义子类时需要定义子类构造器以及可能额外声明的变量和方法
   - 继承语法如下: `class ChildClass: public BaseClass {};`
   - 访问权限修饰符
@@ -258,36 +295,264 @@
   - 如果不调用父类构造函数，则调用默认的构造函数
   - 继承示例
 
-  ```C++
-  #include<string>
+    ```C++
+    #include<string>
 
-  class Shape {
-  protected:
-      double width;
-      double height;
-  public:
-      Shape():width(0), height(0) {}
-      Shape(double a, double b):width(a), height(b){}
-      double ares() {
-          std::cout<<"calculate area of shape"<<std::endl;
-          return 0;
-      }
-  };
-  class Rectangle: public Shape {
-  private:
-      string Name;
-  public:
-      Rectangle():Shape(){}
-      Rectangle(double a, double b, string name):Shape(a, b), Name(name){}
-      string getName() {return name;}
-  };
+    class Shape {
+    protected:
+        double width;
+        double height;
+    public:
+        Shape():width(0), height(0) {}
+        Shape(double a, double b):width(a), height(b){}
+        double ares() {
+            std::cout<<"calculate area of shape"<<std::endl;
+            return 0;
+        }
+    };
+    class Rectangle: public Shape {
+    private:
+        string Name;
+    public:
+        Rectangle():Shape(){}
+        Rectangle(double a, double b, string name):Shape(a, b), Name(name){}
+        string getName() {return name;}
+    };
 
-  class Triangle: public Shape {
-  private:
-      string Name;
-  public:
-      Triangle():Shape(){}
-      Triangle(double a, double b, string name):Shape(a, b), Name(name){}
-      string getName() {return name;}
-  };
-  ```
+    class Triangle: public Shape {
+    private:
+        string Name;
+    public:
+        Triangle():Shape(){}
+        Triangle(double a, double b, string name):Shape(a, b), Name(name){}
+        string getName() {return name;}
+    };
+    ```
+
+- 多态
+  - 多态允许同一方法在基类和派生类表现出不同的行为，即方法的调用取决于对象的类型
+  - 具有多态行为的方法应当被声明为virtual，且在子类中应当重新定义基类的虚方法。在子类中调用基类虚方法应当加上作用域解析运算符
+  - 如果基类中声明了虚方法，则析构函数应当被声明为虚的，即使方法不做任何事情
+  - 基类的指针可以指向派生类对象，但此时只能访问基类的变量和方法，引用同理。基类的指针调用虚方法时将会根据对象类型而非指针类型选择对应的虚方法
+  - 多态示例
+
+    ```C++
+    #include<string>
+    // Base Class
+    class Shape {
+    private:
+        double width;
+        double height;
+    public:
+        Shape():width(0),height(0){}
+        Shape(double a, double b):width(a),height(b){}
+        virtual ~Shape(){}
+        double getWidth(){return width;}
+        double getHeight(){return height;}
+        void setWidth(double width){this->width = width;}
+        void setHeight(double height){this->height = height;}
+        virtual double area() {
+            std::cout<<"area of shape is ";
+        }
+    };
+
+    // Rectangle
+    class Rectangle:public Shape {
+    private:
+        std::string name;
+    public:
+        Rectangle():Shape(),name(""){}
+        Rectangle(double a, double b, std::string name0):Shape(a, b),name(name0){}
+        std::string getName() {return name;}
+        void setName(std::string name) {this->name = name;}
+        virtual double area() {
+            std::cout<<"This is a "<<name<<"\t,";
+            Shape::area();      // 调用基类方法
+            std::cout<<width*height<<std::endl;
+        }
+    };
+
+    // Triangle
+    class Triangle:public Shape {
+    private:
+        std::string name;
+    public:
+        Triangle():Shape(),name(""){}
+        Triangle(double a, double b, std::string name0):Shape(a, b),name(name0){}
+        std::string getName() {return name;}
+        void setName(std::string name) {this->name = name;}
+        virtual double area() {
+            std::cout<<"This is a "<<name<<"\t,";
+            Shape::area();      //调用基类方法
+            std::cout<<0.5 * width * height<<std::endl;
+        }
+    };
+
+    int main() {
+        Shape *p = nullptr;
+        Shape sha = Shape(3, 4);
+        Rectangle rec = Rectangle(3, 4, "rectangle");
+        Triangle  tri = Triangle(3, 4, "triangle");
+
+        p = &sha;
+        p->area();  //调用Shape::area()
+        std::cout<<std::endl;
+        p = &rec;
+        p->area();  //调用Rectangle::area()
+        std::cout<<std::endl;
+        p = &tri;
+        p->area();  //调用Triabgle::area()
+    
+        return 0;
+    }
+    ```
+
+  - 说明
+    - 若派生类定义了不同参数的虚方法，则派生类变量调用虚方法时会隐藏基类同名方法
+    - 如果虚方法被重载，派生类应当重新定义所有重载版本
+    - 隐藏基类方法示例
+
+    ```C++
+    class Base {
+    private:
+        std::string name;
+    public:
+        Base():name(""){}
+        Base(std::string name0):name(name0){}
+        virtual ~Base(){}
+        virtual double disp(double x) {return double;}
+    }
+
+    class Child: public Base {
+    public:
+        Child():Base(){}
+        Child(std::string name):Base(name){}
+        virtual double disp() {return name;}
+    }
+
+    int main() {
+        Child c("child");
+        c.disp()    //正确
+        c.disp(0)   //错误，Base::disp(double x)被隐藏
+    }
+    ```
+
+- 虚方法
+  - 使用关键字virtual修饰声明的方法称为虚方法，声明为virtual的方法在基类以及所有派生类中都是虚的。虚方法的定义无需使用virtual修饰
+  - 非虚方法使用静态联编，虚方法使用动态联编
+  - 当使用指针或引用调用虚方法时会根据对象的类型而非指针或引用类型调用虚方法
+  - 当基类存在虚方法时基类应当声明为虚的，以确保在使用指针或引用时释放对象具有正确的析构函数调用顺序
+  - 虚方法工作原理
+    - 虚函数表(vtbl)存放类中所有虚函数地址的数组，基类和派生类具有独立的虚函数表
+    - 存在虚方法的类创建对象时会增加一个隐藏成员，其指向该类的虚函数表
+    - 派生类中重写了虚方法则将基类虚方法地址替换为新的虚方法地址，若新增了虚方法则直接加入虚函数表
+    - 调用虚方法时先根据隐藏成员找到对应的虚表，再从虚表找到被调用的函数地址，最后调用函数
+
+- 动态内存分配
+  - 当基类使用动态内存分配而子类未使用动态内存分配，可直接使用默认的析构函数、拷贝构造函数和赋值运算符
+  - 当基类和派生类都使用动态内存分配，必需重新定义析构函数、拷贝构造函数和赋值运算符
+    - 析构函数释放派生类变量内存
+    - 拷贝构造函数需在初始化列表调用基类拷贝构造函数，传入的派生类对象被解释为基类对象只拷贝基类部分
+    - 赋值运算符需要调用基类的赋值运算符
+  - 示例程序
+
+    ```C++
+    #include<cstring>
+    class baseDMA {
+    private:
+        char *label;
+        int rating;
+    public:
+        baseDMA():label(nullptr),rating(0){}
+        baseDMA(char* l, int r);
+        baseDMA(const baseMDA& obj);
+        ~baseDMA(){delete [] label;}
+        baseDMA& operator=(const baseDMA& obj);
+    };
+    baseDMA::baseDMA(char* l, int r) {
+        label = new char[std::strlen(l)+1];
+        std::strcopy(label, l);
+        rating = r;
+    }
+    baseDMA::baseDMA(const baseDMA& obj) {
+        label = new char[std::strlen(obj.label)+1];
+        std::strcopy(label, obj.label);
+        rating = obj.rating;
+    }
+    baseDMA& baseDMA::operator=(const baseDMA& obj) {
+        if (this == &obj)
+            return *this;
+        delete [] label;
+        label = new char[std::stdlen(obj.label)+1];
+        std::strcopy(label, obj.label);
+        rating = obj.rating;
+        return *this;
+    }
+
+    class hasDMA: public baseDMA {
+    private:
+        char *style;
+    public:
+        hasDMA():baseDMA(),style(nullptr){}
+        hasDMA(char* l, int r, char* s);
+        hasDMA(const hasDMA& obj);
+        ~hasDMA(){delete [] style;}
+        hasDMA& operator=(const hasDMA& obj);
+    };
+    hasDMA::hasDMA(char* l, int r, char* s):baseDMA(l, r) {
+        style = new char[std::strlen(s)+1];
+        std::strcopy(style, s);
+    }
+    hasDMA::hasDMA(const hasDMA& obj):baseDMA(obj) {
+        style = new char[std::strlen(s)+1];
+        std::strcopy(style, s);
+    }
+    hasDMA& hasDMA::operator=(const hasDMA& obj) {
+        if (this == &obj)
+            return *this;
+        baseDMA::operator=(obj);
+        delete [] style;
+        style = new char[std::strlen(obj.style)+1];
+        std::strcopy(style, obj.style);
+        return *this;
+    }
+    ```
+
+## 五、抽象类与多继承
+
+- 抽象类
+  - 纯虚方法: 方法声明为`virtual 返回值 方法名(参数列表)=0;`的方法称为纯虚方法，纯虚方法一般无需实现
+  - 至少有一个纯虚方法的类称为抽象类，抽象类不能实例化，但可以引用派生类的对象
+  - 若子类将基类所有纯虚方法实现为虚方法，则该类为抽象类的一个具体类
+  - 示例
+
+    ```C++
+    class BaseEllipse {
+    private:
+        double x;
+        double y;
+    public:
+        BaseEllipse(double x0=0, double y0=0):x(x0),y(y0){}
+        virtual ~BaseEllipse(){}            //抽象类的析构函数一定是虚的
+        void move(double nx, double ny){x = nx; y = ny;}
+        virtual double area() const = 0;    //纯虚方法
+    };
+    class Circle: public BaseEllipse {
+    private:
+        double r;
+    public:
+        Circle(double x0, double y0, double r0):BaseEllipse(x0, y0), r(r0){}
+        virtual double area() const;        //纯虚方法的虚方法实现
+    };
+    class Ellipse: public BaseEllipse {
+    private:
+        double a;
+        double b;
+        double angle;
+    public:
+        Ellipse(double x0, double y0, double a0, double b0, double angle0):BaseEllipse(x0, y0), a(a0), b(b0), angle(angle0){}
+        virtual double area() const;        //纯虚方法的虚方法实现
+        void rotate(double nang) {angle += nang}
+        void scale(double sa, double sb) {a *= sa; b *= sb;}
+    };
+    ```
